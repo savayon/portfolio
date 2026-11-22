@@ -1,0 +1,1247 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>스르륵패스 엘리베이터 시뮬레이터 v4</title>
+<style>
+@import url('https://fonts.googleapis.com/css2?family=Noto+Sans+KR:wght@300;400;500;700;900&family=JetBrains+Mono:wght@400;600;700&display=swap');
+:root{
+  --bg:#070b12;--surf:#0d1520;--surf2:#13202f;--surf3:#192840;
+  --border:#1a2a3e;--border2:#203048;
+  --acc:#00d4ff;--acc2:#ff6b35;--acc3:#7fff6e;--acc4:#a78bfa;
+  --text:#dde5f0;--muted:#5a6a88;--danger:#ff3d54;--warn:#ffb300;
+}
+*{box-sizing:border-box;margin:0;padding:0}
+html,body{height:100%;overflow:hidden}
+body{font-family:'Noto Sans KR',sans-serif;background:var(--bg);color:var(--text);display:flex;flex-direction:column}
+body::before{content:'';position:fixed;inset:0;background-image:linear-gradient(rgba(0,212,255,.018) 1px,transparent 1px),linear-gradient(90deg,rgba(0,212,255,.018) 1px,transparent 1px);background-size:40px 40px;pointer-events:none;z-index:0}
+header{flex-shrink:0;padding:9px 18px;border-bottom:1px solid var(--border);background:rgba(7,11,18,.97);display:flex;align-items:center;gap:12px;z-index:200}
+.hlogo{width:30px;height:30px;background:linear-gradient(135deg,var(--acc),#0044ff);border-radius:7px;display:flex;align-items:center;justify-content:center;font-size:15px;flex-shrink:0}
+header h1{font-size:13px;font-weight:700}
+header small{font-size:9px;color:var(--muted);display:block;margin-top:1px}
+.hbadges{margin-left:auto;display:flex;gap:5px;align-items:center;flex-wrap:wrap}
+.badge{padding:2px 7px;border-radius:100px;font-size:9px;font-weight:700;letter-spacing:.5px;text-transform:uppercase}
+.ba{background:rgba(0,212,255,.1);color:var(--acc);border:1px solid rgba(0,212,255,.22)}
+.bb{background:rgba(255,107,53,.1);color:var(--acc2);border:1px solid rgba(255,107,53,.22)}
+.br{background:rgba(255,61,84,.1);color:var(--danger);border:1px solid rgba(255,61,84,.22)}
+.bg2{background:rgba(127,255,110,.1);color:var(--acc3);border:1px solid rgba(127,255,110,.22)}
+.outer{flex:1;display:grid;grid-template-columns:268px 1fr;overflow:hidden}
+/* SIDEBAR */
+.sidebar{border-right:1px solid var(--border);background:var(--surf);overflow-y:auto;padding:14px 13px}
+.s-sec{font-size:9px;font-weight:700;letter-spacing:1.4px;text-transform:uppercase;color:var(--muted);padding:13px 0 7px;border-top:1px solid var(--border);margin-top:4px}
+.s-sec:first-child{padding-top:0;border-top:none;margin-top:0}
+.field{margin-bottom:9px}
+.field label{display:block;font-size:10px;color:var(--muted);margin-bottom:3px;font-weight:500}
+.fi{width:100%;background:var(--bg);border:1px solid var(--border);color:var(--text);padding:5px 8px;border-radius:6px;font-family:'JetBrains Mono',monospace;font-size:11px;outline:none;transition:border-color .2s}
+.fi:focus{border-color:var(--acc)}.fi[readonly]{opacity:.4}
+.hint{font-size:9px;color:var(--muted);margin-top:2px}
+.hh-grid{display:grid;grid-template-columns:repeat(5,1fr);gap:4px;margin-bottom:5px}
+.hh-item label{font-size:8px;color:var(--muted);display:block;margin-bottom:2px;text-align:center}
+.hh-item input{width:100%;background:var(--bg);border:1px solid var(--border);color:var(--text);padding:4px 3px;border-radius:5px;font-family:'JetBrains Mono',monospace;font-size:11px;outline:none;text-align:center}
+.hh-item input:focus{border-color:var(--acc)}
+.pct-sum{font-size:10px;font-family:'JetBrains Mono',monospace;padding:3px 6px;border-radius:4px;margin-bottom:7px}
+.pct-ok{background:rgba(127,255,110,.07);color:var(--acc3);border:1px solid rgba(127,255,110,.18)}
+.pct-bad{background:rgba(255,61,84,.07);color:var(--danger);border:1px solid rgba(255,61,84,.18)}
+.pk-grid{display:grid;gap:2px}
+.pk-row{display:grid;grid-template-columns:32px 1fr 34px;gap:4px;align-items:center}
+.pk-row label{font-size:8px;color:var(--muted);font-family:'JetBrains Mono',monospace}
+.pk-row input[type=range]{accent-color:var(--acc);cursor:pointer;width:100%}
+.pk-row span{font-size:8px;font-family:'JetBrains Mono',monospace;color:var(--acc);text-align:right}
+.run-btn{width:100%;padding:9px;background:linear-gradient(135deg,var(--acc),#0044ff);border:none;border-radius:7px;color:#fff;font-family:'Noto Sans KR',sans-serif;font-weight:700;font-size:12px;cursor:pointer;margin-top:12px;transition:opacity .2s,transform .1s}
+.run-btn:hover{opacity:.88}.run-btn:active{transform:scale(.98)}.run-btn:disabled{opacity:.35;cursor:not-allowed}
+/* CONTENT */
+.content{overflow:hidden;display:flex;flex-direction:column}
+.tabs-bar{flex-shrink:0;display:flex;border-bottom:1px solid var(--border);background:var(--surf);padding:0 16px;overflow-x:auto}
+.tab-btn{padding:8px 13px;background:none;border:none;cursor:pointer;font-family:'Noto Sans KR',sans-serif;font-size:11px;color:var(--muted);border-bottom:2px solid transparent;margin-bottom:-1px;transition:all .18s;white-space:nowrap}
+.tab-btn.active{color:var(--acc);border-bottom-color:var(--acc)}
+.tab-btn:hover{color:var(--text)}
+.tab-pnl{display:none;flex:1;overflow:hidden}
+.tab-pnl.active{display:flex;flex-direction:column}
+/* ANIM */
+.anim-top{flex-shrink:0;display:flex;align-items:center;gap:8px;padding:10px 16px;border-bottom:1px solid var(--border);background:var(--surf);flex-wrap:wrap}
+.anim-btn{padding:4px 10px;border:1px solid var(--border);background:var(--surf2);border-radius:5px;color:var(--text);font-size:11px;cursor:pointer;font-family:'Noto Sans KR',sans-serif;transition:all .12s}
+.anim-btn:hover{border-color:var(--acc);color:var(--acc)}
+.anim-btn.on{background:var(--acc);border-color:var(--acc);color:#000;font-weight:700}
+.spd-sel{background:var(--surf2);border:1px solid var(--border);color:var(--text);padding:4px 7px;border-radius:5px;font-size:11px;font-family:'JetBrains Mono',monospace;outline:none}
+.t-disp{font-family:'JetBrains Mono',monospace;font-size:17px;font-weight:700;color:var(--acc);min-width:76px}
+/* DUAL — 좌우 나란히, 각 col 독립 스크롤 */
+.anim-body{flex:1;overflow:hidden;display:grid;grid-template-columns:1fr 1fr;min-height:0}
+.vis-col{display:flex;flex-direction:column;overflow:hidden;border-right:1px solid var(--border);min-height:0;min-width:0}
+.vis-col:last-child{border-right:none}
+.vis-hdr{flex-shrink:0;padding:5px 12px;background:var(--surf2);border-bottom:1px solid var(--border);display:flex;align-items:center;gap:8px}
+.vis-hdr h3{font-size:11px;font-weight:700}
+.vis-hdr.ha h3{color:var(--acc)}.vis-hdr.hb h3{color:var(--acc2)}
+.vis-live{flex-shrink:0;display:grid;grid-template-columns:repeat(4,1fr);gap:4px;padding:6px 8px;border-bottom:1px solid var(--border)}
+.vlc{background:var(--surf);border:1px solid var(--border);border-radius:4px;padding:5px 7px}
+.vll{font-size:8px;color:var(--muted);margin-bottom:2px}.vlv{font-family:'JetBrains Mono',monospace;font-size:12px;font-weight:700}
+.vis-scroll{flex:1;overflow-y:auto;overflow-x:auto;padding:7px 9px;min-height:0}
+.bld-wrap{display:flex;gap:7px;width:max-content}
+/* BUILDING */
+.fl-row{display:flex;align-items:center;gap:4px;height:17px;margin-bottom:2px}
+.fl-lbl{font-size:7px;font-family:'JetBrains Mono',monospace;color:var(--muted);width:24px;text-align:right;flex-shrink:0}
+.fl-bar{flex:1;height:12px;background:var(--surf2);border-radius:2px;display:flex;align-items:center;padding:0 3px;overflow:hidden;min-width:70px}
+.fl-bar.res{background:var(--surf3)}.fl-bar.lobby{background:rgba(0,212,255,.06);border:1px solid rgba(0,212,255,.16)}.fl-bar.amen{background:rgba(167,139,250,.06);border:1px solid rgba(167,139,250,.16)}
+.pdot{width:6px;height:6px;border-radius:50%;flex-shrink:0;margin:0 1px}
+.pdot.w{background:var(--warn);animation:pd .7s infinite alternate}.pdot.r{background:var(--acc3)}
+@keyframes pd{from{opacity:.35}to{opacity:1}}
+/* ELEVATORS */
+.elvs-col{display:flex;gap:5px;flex-shrink:0}
+.e-shaft{position:relative}
+.e-shaft-lbl{font-size:7px;text-align:center;color:var(--muted);margin-bottom:2px;font-family:'JetBrains Mono',monospace}
+.e-track{position:relative;background:var(--surf2);border:1px solid var(--border);border-radius:3px;overflow:hidden;width:32px}
+.e-car{position:absolute;left:1px;right:1px;border-radius:2px;display:flex;align-items:center;justify-content:center;font-size:6px;font-weight:700;color:#000;z-index:2;transition:top .1s linear}
+.e-car.run{background:var(--acc)}.e-car.ghost{background:var(--acc2)}.e-car.idle{background:var(--surf3);color:var(--muted);border:1px solid var(--border2)}.e-car.park{background:#2a3a50;color:var(--muted);border:1px solid var(--border)}
+/* RESULTS */
+.res-body{flex:1;overflow-y:auto;padding:18px}
+.cmp2{display:grid;grid-template-columns:1fr 1fr;gap:11px;margin-bottom:14px}
+.cc{background:var(--surf);border:1px solid var(--border);border-radius:9px;padding:14px;position:relative;overflow:hidden}
+.cc::before{content:'';position:absolute;top:0;left:0;right:0;height:2px}
+.cc.ca::before{background:var(--acc)}.cc.cb::before{background:var(--acc2)}
+.cc h3{font-size:11px;color:var(--muted);margin-bottom:4px}
+.bn{font-family:'JetBrains Mono',monospace;font-size:22px;font-weight:700;line-height:1.1}
+.ca .bn{color:var(--acc)}.cb .bn{color:var(--acc2)}
+.si{font-size:10px;color:var(--muted);margin-top:6px;line-height:1.8}
+.diffbar{background:linear-gradient(135deg,rgba(255,61,84,.09),rgba(255,61,84,.03));border:1px solid rgba(255,61,84,.28);border-radius:9px;padding:13px 16px;display:flex;align-items:center;gap:18px;margin-bottom:14px}
+.dn{font-family:'JetBrains Mono',monospace;font-size:20px;font-weight:700;color:var(--danger)}
+.dp{font-size:10px;color:var(--warn);font-family:'JetBrains Mono',monospace;margin-top:2px}
+.s6{display:grid;grid-template-columns:repeat(3,1fr);gap:8px;margin-bottom:14px}
+.s6c{background:var(--surf);border:1px solid var(--border);border-radius:7px;padding:10px}
+.s6c .sl{font-size:9px;color:var(--muted);margin-bottom:2px}.s6c .sv{font-family:'JetBrains Mono',monospace;font-size:14px;font-weight:700}
+.hchart{background:var(--surf);border:1px solid var(--border);border-radius:9px;padding:13px;margin-bottom:10px}
+.hct{font-size:11px;color:var(--muted);margin-bottom:10px;font-weight:600}
+.hbars{display:flex;align-items:flex-end;gap:2px;height:80px}
+.hgrp{flex:1;display:flex;gap:1px;align-items:flex-end}
+.hb{flex:1;border-radius:2px 2px 0 0;min-height:2px}
+.hb.bn2{background:var(--acc);opacity:.7}.hb.bs{background:var(--acc2);opacity:.7}
+.hlbls{display:flex;gap:2px;margin-top:2px}
+.hlbls span{flex:1;text-align:center;font-size:7px;color:var(--muted);font-family:'JetBrains Mono',monospace}
+.leg{display:flex;gap:12px;margin-top:6px}
+.leg-i{display:flex;align-items:center;gap:4px;font-size:10px;color:var(--muted)}
+.leg-d{width:8px;height:8px;border-radius:2px}
+/* LOG */
+.log-body{flex:1;overflow-y:auto;padding:14px}
+.lctrl{display:flex;gap:6px;margin-bottom:8px;flex-wrap:wrap}
+.lctrl input,.lctrl select{background:var(--surf);border:1px solid var(--border);color:var(--text);padding:5px 8px;border-radius:5px;font-size:11px;outline:none}
+.lctrl input{flex:1;min-width:130px}.lctrl input:focus,.lctrl select:focus{border-color:var(--acc)}
+.twrap{background:var(--surf);border:1px solid var(--border);border-radius:8px;overflow:hidden;max-height:calc(100vh - 260px);overflow-y:auto}
+table{width:100%;border-collapse:collapse;font-size:10px}
+thead{position:sticky;top:0;background:var(--surf2);z-index:1}
+th{padding:7px 9px;text-align:left;font-size:8px;font-weight:700;letter-spacing:.6px;text-transform:uppercase;color:var(--muted);border-bottom:1px solid var(--border)}
+td{padding:5px 9px;border-bottom:1px solid rgba(26,42,62,.4);font-family:'JetBrains Mono',monospace;font-size:10px}
+tr:last-child td{border-bottom:none}
+tr:hover td{background:rgba(0,212,255,.02)}
+.tag{display:inline-block;padding:1px 5px;border-radius:3px;font-size:8px;font-weight:700;font-family:'Noto Sans KR',sans-serif}
+.t-exit{background:rgba(255,107,53,.13);color:var(--acc2)}.t-ent{background:rgba(127,255,110,.13);color:var(--acc3)}.t-gho{background:rgba(255,61,84,.13);color:var(--danger)}.t-am{background:rgba(167,139,250,.13);color:var(--acc4)}
+/* HH */
+.hh-body{flex:1;overflow-y:auto;padding:14px}
+.hhc{background:var(--surf);border:1px solid var(--border);border-radius:7px;margin-bottom:4px;overflow:hidden}
+.hhh{padding:8px 11px;display:flex;align-items:center;gap:8px;cursor:pointer;transition:background .12s}
+.hhh:hover{background:var(--surf2)}
+.hhr{font-family:'JetBrains Mono',monospace;font-weight:700;font-size:11px;color:var(--acc);min-width:60px}
+.hhi{flex:1;font-size:10px;color:var(--muted)}.hhs{font-size:10px;font-family:'JetBrains Mono',monospace;text-align:right}
+.exi{color:var(--muted);font-size:10px;transition:transform .18s;flex-shrink:0}
+.hhc.op .exi{transform:rotate(180deg)}
+.hhb{display:none;border-top:1px solid var(--border)}.hhc.op .hhb{display:block}
+.mr{padding:6px 11px;border-bottom:1px solid rgba(26,42,62,.35);display:grid;grid-template-columns:85px 58px 1fr 65px;gap:6px;align-items:start;font-size:10px;font-family:'JetBrains Mono',monospace}
+.mr:last-child{border-bottom:none}.mid{color:var(--acc)}
+.sb2{font-size:8px;padding:2px 5px;border-radius:3px}
+.hs{background:rgba(255,107,53,.18);color:var(--acc2)}.ns{background:rgba(90,106,136,.15);color:var(--muted)}
+.ech{grid-column:1/-1;display:flex;flex-wrap:wrap;gap:2px;padding:2px 0}
+.ec{display:inline-block;padding:1px 5px;border-radius:3px;font-size:8px;cursor:default}
+.ec-ex{background:rgba(255,107,53,.09);color:var(--acc2);border:1px solid rgba(255,107,53,.17)}
+.ec-en{background:rgba(127,255,110,.09);color:var(--acc3);border:1px solid rgba(127,255,110,.17)}
+.ec-gh{background:rgba(255,61,84,.09);color:var(--danger);border:1px solid rgba(255,61,84,.17)}
+.ec-am{background:rgba(167,139,250,.09);color:var(--acc4);border:1px solid rgba(167,139,250,.17)}
+/* STATS PANEL */
+.stats-body{flex:1;overflow-y:auto;padding:18px}
+.stats-top{display:flex;align-items:center;gap:10px;margin-bottom:16px;flex-wrap:wrap}
+.stats-top h2{font-size:15px;font-weight:700}
+.progress-ring{width:120px;height:120px;flex-shrink:0}
+.pr-bg{fill:none;stroke:var(--surf2);stroke-width:8}
+.pr-fill{fill:none;stroke:var(--acc);stroke-width:8;stroke-linecap:round;stroke-dasharray:339.3;stroke-dashoffset:339.3;transform-origin:60px 60px;transform:rotate(-90deg);transition:stroke-dashoffset .3s}
+.seed-grid{display:grid;grid-template-columns:repeat(10,1fr);gap:3px;margin-bottom:16px}
+.seed-cell{width:100%;aspect-ratio:1;border-radius:3px;background:var(--surf2);border:1px solid var(--border);display:flex;align-items:center;justify-content:center;font-size:7px;font-family:'JetBrains Mono',monospace;cursor:pointer;transition:all .12s;color:var(--muted)}
+.seed-cell.done-a{background:rgba(0,212,255,.15);border-color:var(--acc);color:var(--acc)}
+.seed-cell.done-ab{background:rgba(127,255,110,.12);border-color:var(--acc3);color:var(--acc3)}
+.seed-cell.running{background:rgba(255,179,0,.15);border-color:var(--warn);animation:blink .5s infinite alternate}
+@keyframes blink{from{opacity:.6}to{opacity:1}}
+.stat-cards{display:grid;grid-template-columns:repeat(2,1fr);gap:10px;margin-bottom:14px}
+.sc{background:var(--surf);border:1px solid var(--border);border-radius:9px;padding:14px}
+.sc h4{font-size:10px;color:var(--muted);margin-bottom:8px;font-weight:600;text-transform:uppercase;letter-spacing:.8px}
+.sc-row{display:grid;grid-template-columns:1fr auto;gap:8px;align-items:baseline;margin-bottom:5px;font-size:11px}
+.sc-row .lbl{color:var(--muted)}.sc-row .val{font-family:'JetBrains Mono',monospace;font-size:13px;font-weight:700}
+.val-a{color:var(--acc)}.val-b{color:var(--acc2)}.val-diff{color:var(--danger)}.val-ok{color:var(--acc3)}.val-p{color:var(--warn)}
+.ci-bar{height:6px;background:var(--surf2);border-radius:100px;overflow:hidden;margin-top:4px;position:relative}
+.ci-fill{height:100%;border-radius:100px;position:absolute}
+.ci-fill.a{background:var(--acc);opacity:.7}
+.ci-fill.b{background:var(--acc2);opacity:.7}
+.run-all-btn{padding:7px 16px;background:linear-gradient(135deg,var(--acc3),#00b050);border:none;border-radius:6px;color:#000;font-family:'Noto Sans KR',sans-serif;font-weight:700;font-size:11px;cursor:pointer;transition:opacity .2s}
+.run-all-btn:hover{opacity:.85}.run-all-btn:disabled{opacity:.35;cursor:not-allowed}
+.clear-btn{padding:7px 12px;background:none;border:1px solid var(--border);border-radius:6px;color:var(--muted);font-size:11px;cursor:pointer;font-family:'Noto Sans KR',sans-serif;transition:all .15s}
+.clear-btn:hover{border-color:var(--danger);color:var(--danger)}
+.prog-wrap{display:flex;align-items:center;justify-content:center;flex:1;flex-direction:column;gap:14px}
+.prog-box2{width:100%;max-width:340px}
+.pt{font-size:13px;font-weight:600;margin-bottom:10px;text-align:center}
+.ptrack{height:5px;background:var(--surf2);border-radius:100px;overflow:hidden}
+.pfill{height:100%;background:linear-gradient(90deg,var(--acc),#0044ff);border-radius:100px;transition:width .08s}
+.plbl{font-size:10px;color:var(--muted);margin-top:5px;font-family:'JetBrains Mono',monospace;text-align:center}
+.ph{display:flex;flex-direction:column;align-items:center;justify-content:center;flex:1;color:var(--muted);gap:10px}
+.ph .ic{font-size:36px;opacity:.2}.ph p{font-size:12px}
+</style>
+</head>
+<body>
+<header>
+  <div class="hlogo">🏢</div>
+  <div>
+    <h1>스르륵패스 엘리베이터 시뮬레이터 v4</h1>
+    <small>ETA 기반 군관리 · S-Curve 속도 프로필 · 100시드 통계 검정</small>
+  </div>
+  <div class="hbadges" id="hbadges"></div>
+</header>
+
+<div class="outer">
+<div class="sidebar">
+  <div class="s-sec">🏗️ 아파트 구조</div>
+  <div class="field"><label>지상 층수</label><input class="fi" type="number" id="c-ab" value="45"></div>
+  <div class="field"><label>지하 층수</label><input class="fi" type="number" id="c-bl" value="5"></div>
+  <div class="field"><label>주거 시작 층</label><input class="fi" type="number" id="c-rs" value="3"><div class="hint">1·2층 비주거 → 3</div></div>
+  <div class="field"><label>층당 세대수</label><input class="fi" type="number" id="c-upf" value="5"></div>
+  <div class="field"><label>엘리베이터 대수</label><input class="fi" type="number" id="c-ne" value="4"></div>
+  <div class="s-sec">🚪 특수층</div>
+  <div class="field"><label>공동현관 층 (지하=음수)</label><input class="fi" type="text" id="c-lob" value="2,1,-1,-2,-3,-4,-5"></div>
+  <div class="field"><label>문화시설층</label><input class="fi" type="text" id="c-am" value="3"></div>
+  <div class="s-sec">👨‍👩‍👧 가구원수 분포 (%)</div>
+  <div class="hh-grid">
+    <div class="hh-item"><label>1인</label><input type="number" id="hh1" value="25"></div>
+    <div class="hh-item"><label>2인</label><input type="number" id="hh2" value="30"></div>
+    <div class="hh-item"><label>3인</label><input type="number" id="hh3" value="25"></div>
+    <div class="hh-item"><label>4인</label><input type="number" id="hh4" value="15"></div>
+    <div class="hh-item"><label>5인+</label><input type="number" id="hh5" value="5"></div>
+  </div>
+  <div class="pct-sum pct-ok" id="pct-d">합계: 100%</div>
+  <div class="s-sec">📱 스르륵패스 사용률 (%)</div>
+  <div class="field"><input class="fi" type="number" id="c-sr" value="70"></div>
+  <div class="s-sec">⏰ 시간대별 외출 가중치</div>
+  <div style="font-size:9px;color:var(--muted);line-height:1.6;margin-bottom:6px;padding:6px 8px;background:var(--surf2);border-radius:5px;border:1px solid var(--border)">
+    <b style="color:var(--text)">가중치란?</b> 각 시간대에 세대원이 외출을 시작할 상대적 확률입니다.<br>
+    값이 클수록 그 시간에 외출이 집중됩니다.<br>
+    <span style="color:var(--acc)">▸ 기본값:</span> 7~9시(출근), 17~20시(퇴근) 피크<br>
+    <span style="color:var(--warn)">▸ 합계 무관</span> — 내부에서 자동 정규화됨
+  </div>
+  <div class="pk-grid" id="pk-grid"></div>
+  <div class="s-sec">⚙️ 엘리베이터 설정</div>
+  <div class="field"><label>속도 (m/min)</label><input class="fi" type="number" value="180" readonly></div>
+  <div class="field"><label>정격하중 (kg)</label><input class="fi" type="number" value="1175" readonly></div>
+  <div class="field"><label>층간 높이 (m)</label><input class="fi" type="number" id="c-fh" value="3.0" step="0.1"></div>
+  <div class="field"><label>가속도 (m/s²)</label><input class="fi" type="number" id="c-acc" value="1.0" step="0.1"><div class="hint">WBHS1 기준 ~1.0</div></div>
+  <div class="field"><label>Jerk (m/s³) — S-Curve</label><input class="fi" type="number" id="c-jerk" value="1.5" step="0.1"><div class="hint">높을수록 가속 구간 짧음</div></div>
+  <div class="field"><label>유휴 귀환 대기 시간 (초)</label><input class="fi" type="number" id="c-idle-t" value="90"><div class="hint">이 시간 호출 없으면 홈 위치로</div></div>
+  <div class="field"><label>유휴 상단 층</label><input class="fi" type="number" id="c-ih" value="24"><div class="hint">절반↑ 이 층, 절반↓ 1층 대기</div></div>
+  <div class="field"><label>기본 시드</label><input class="fi" type="number" id="c-seed" value="42"></div>
+  <button class="run-btn" id="run-btn" onclick="startSim()">▶ 이 시드로 실행</button>
+</div>
+
+<div class="content">
+  <div class="tabs-bar">
+    <button class="tab-btn active" onclick="showTab('t-anim',this)">🎬 듀얼 애니메이션</button>
+    <button class="tab-btn" onclick="showTab('t-res',this)">📊 결과 비교</button>
+    <button class="tab-btn" onclick="showTab('t-log',this)">📋 호출 로그</button>
+    <button class="tab-btn" onclick="showTab('t-hh',this)">🏠 세대 로그</button>
+    <button class="tab-btn" onclick="showTab('t-stats',this)">📈 통계 검정 <span id="stats-cnt-badge" style="background:var(--acc3);color:#000;font-size:8px;padding:1px 5px;border-radius:3px;margin-left:3px;display:none">0</span></button>
+  </div>
+
+  <div class="tab-pnl active" id="t-anim">
+    <div class="anim-top">
+      <button class="anim-btn" id="btn-play" onclick="togglePlay()">▶ 재생</button>
+      <button class="anim-btn" onclick="resetAnim()">⟳ 초기화</button>
+      <span style="font-size:9px;color:var(--muted)">배속:</span>
+      <select class="spd-sel" id="spd-sel" onchange="animSpd=+this.value">
+        <option value="30">×30</option><option value="60" selected>×60</option>
+        <option value="120">×120</option><option value="300">×300</option>
+        <option value="600">×600</option><option value="1800">×1800</option>
+      </select>
+      <div class="t-disp" id="t-disp">00:00:00</div>
+      <span style="font-size:9px;color:var(--muted);margin-left:8px">시드:</span>
+      <span id="cur-seed-disp" style="font-family:'JetBrains Mono',monospace;font-size:11px;color:var(--acc)">–</span>
+    </div>
+    <div class="anim-body" id="anim-body">
+      <div class="ph"><div class="ic">🔬</div><p>시뮬레이션 실행 후 이용 가능합니다</p></div>
+    </div>
+  </div>
+
+  <div class="tab-pnl" id="t-res">
+    <div class="res-body ph" id="res-body"><div class="ic">📊</div><p>시뮬레이션 실행 후 이용 가능합니다</p></div>
+  </div>
+
+  <div class="tab-pnl" id="t-log">
+    <div class="log-body" id="log-body"><div class="ph"><div class="ic">📋</div><p>시뮬레이션 실행 후 이용 가능합니다</p></div></div>
+  </div>
+
+  <div class="tab-pnl" id="t-hh">
+    <div class="hh-body" id="hh-body"><div class="ph"><div class="ic">🏠</div><p>시뮬레이션 실행 후 이용 가능합니다</p></div></div>
+  </div>
+
+  <div class="tab-pnl" id="t-stats">
+    <div class="stats-body" id="stats-body">
+      <div class="stats-top">
+        <div>
+          <h2>100시드 통계 검정</h2>
+          <p style="font-size:10px;color:var(--muted);margin-top:2px">각 시드별 1회 실행. 중복 실행 시 해당 시드 결과 업데이트.</p>
+        </div>
+        <svg class="progress-ring" viewBox="0 0 120 120">
+          <circle class="pr-bg" cx="60" cy="60" r="54"/>
+          <circle class="pr-fill" id="pr-fill" cx="60" cy="60" r="54"/>
+          <text x="60" y="64" text-anchor="middle" fill="var(--acc)" font-size="18" font-family="JetBrains Mono" font-weight="700" id="pr-text">0/100</text>
+        </svg>
+        <div style="display:flex;flex-direction:column;gap:6px">
+          <button class="run-all-btn" id="run-all-btn" onclick="runAllSeeds()">⚡ 100시드 전체 실행</button>
+          <button class="clear-btn" onclick="clearStats()">🗑 결과 초기화</button>
+        </div>
+      </div>
+      <div class="seed-grid" id="seed-grid"></div>
+      <div id="stat-cards-wrap">
+        <div class="ph" style="height:200px"><div class="ic" style="font-size:28px">📈</div><p>시뮬레이션 결과가 쌓이면 통계가 나타납니다</p></div>
+      </div>
+    </div>
+  </div>
+</div>
+</div>
+
+<script>
+// ============================================================
+// PRNG — Mulberry32
+// ============================================================
+let _r;
+const sRng=s=>{let v=s;_r=()=>{v|=0;v=v+0x6D2B79F5|0;let t=Math.imul(v^v>>>15,1|v);t=t+Math.imul(t^t>>>7,61|t)^t;return((t^t>>>14)>>>0)/4294967296}};
+const rnd=()=>_r();
+const ri=(a,b)=>Math.floor(rnd()*(b-a+1))+a;
+function wc(items,w){let t=w.reduce((a,b)=>a+b,0),r=rnd()*t,c=0;for(let i=0;i<items.length;i++){c+=w[i];if(r<c)return items[i]}return items[items.length-1]}
+
+// ============================================================
+// PEAK GRID
+// ============================================================
+const DEF_PEAK=[1,0,0,0,1,4,22,28,14,7,5,4,4,4,5,7,9,18,20,16,10,6,4,2];
+function initPK(){
+  const g=document.getElementById('pk-grid');g.innerHTML='';
+  for(let h=0;h<24;h++){
+    g.innerHTML+=`<div class="pk-row">
+      <label>${String(h).padStart(2,'0')}시</label>
+      <input type="range" id="pk${h}" min="0" max="100" value="${DEF_PEAK[h]}" oninput="document.getElementById('pv${h}').textContent=this.value">
+      <span id="pv${h}">${DEF_PEAK[h]}</span></div>`;
+  }
+}
+initPK();
+['hh1','hh2','hh3','hh4','hh5'].forEach(id=>document.getElementById(id).addEventListener('input',updPct));
+function updPct(){
+  const s=['hh1','hh2','hh3','hh4','hh5'].reduce((a,id)=>a+(+document.getElementById(id).value||0),0);
+  const el=document.getElementById('pct-d');el.textContent=`합계: ${s}%`;el.className='pct-sum '+(s===100?'pct-ok':'pct-bad');
+}
+
+// ============================================================
+// CONFIG
+// ============================================================
+function getCfg(seedOverride){
+  const lob=document.getElementById('c-lob').value.split(',').map(s=>parseInt(s.trim())).filter(v=>!isNaN(v));
+  const am=document.getElementById('c-am').value.split(',').map(s=>parseInt(s.trim())).filter(v=>!isNaN(v));
+  const peak=Array.from({length:24},(_,h)=>+(document.getElementById('pk'+h).value)||0);
+  return{
+    above:+document.getElementById('c-ab').value||45,
+    below:+document.getElementById('c-bl').value||5,
+    resStart:+document.getElementById('c-rs').value||3,
+    upf:+document.getElementById('c-upf').value||5,
+    ne:+document.getElementById('c-ne').value||4,
+    lob,am,
+    hhDist:[+document.getElementById('hh1').value,+document.getElementById('hh2').value,
+            +document.getElementById('hh3').value,+document.getElementById('hh4').value,+document.getElementById('hh5').value],
+    srRate:(+document.getElementById('c-sr').value||70)/100,
+    peak,
+    fh:+document.getElementById('c-fh').value||3.0,
+    acel:+document.getElementById('c-acc').value||1.0,
+    jerk:+document.getElementById('c-jerk').value||1.5,
+    idleT:+document.getElementById('c-idle-t').value||90,
+    idleH:+document.getElementById('c-ih').value||24,
+    seed:seedOverride!==undefined?seedOverride:(+document.getElementById('c-seed').value||42),
+    vpm:180,cap:1175,
+  };
+}
+
+// ============================================================
+// FLOORS
+// ============================================================
+function buildFloors(cfg){const a=[];for(let f=-cfg.below;f<=cfg.above;f++){if(f!==0)a.push(f)}return a}
+const flL=f=>f>0?f+'F':'B'+Math.abs(f);
+
+// ============================================================
+// S-CURVE TRAVEL TIME
+// ============================================================
+/*
+  S-Curve with Jerk j, max acceleration a, max velocity v (m/s)
+  Phase 1: jerk up   (0 → a)  t1 = a/j
+  Phase 2: const acc (a)       t2 = ...
+  Phase 3: jerk down (a → 0)  t3 = t1
+  Phase 4: const vel           t4 = ...
+  (decel mirror)
+
+  For short distances the constant-velocity or constant-accel phases may vanish.
+*/
+function sCurveTravelSec(cfg, f1, f2){
+  if(f1===f2)return 0;
+  const dist=Math.abs(f1-f2)*cfg.fh;
+  const v=cfg.vpm/60;    // max vel m/s
+  const a=cfg.acel;      // max accel m/s²
+  const j=cfg.jerk;      // jerk m/s³
+
+  // Time to reach max accel from rest: ta = a/j
+  const ta=a/j;
+  // Distance covered during jerk-up phase: da = 0.5*j*ta^2 * ... 
+  // Full accel phase (jerk up + const accel + jerk down):
+  // vel at end of jerk-up: va = 0.5*j*ta^2 = a^2/(2j)
+  const va=a*a/(2*j);
+  // const accel phase to reach v:
+  const vNeedConst=v-2*va; // remaining vel for const-accel phase
+  let tAccel, dAccel; // total time & dist for 0→v
+  if(vNeedConst>0){
+    const tConst=vNeedConst/a;
+    tAccel=2*ta+tConst;
+    // dist: jerk-up: j/6*ta^3 * 2 + va*ta * ... let me compute properly
+    // d_jerk_up = j*ta^3/6 = a^3/(6j^2)
+    const djUp=a*a*a/(6*j*j);
+    // d_const_accel = va*tConst + 0.5*a*tConst^2
+    const dcA=va*tConst+0.5*a*tConst*tConst;
+    // d_jerk_down = same as jerk_up but starting at vel=v-va:
+    const djDown=djUp+(v-va)*ta; // va*ta + a*ta^2/2 - j/6*ta^3... simplified
+    dAccel=djUp+dcA+djDown;
+  } else {
+    // v is reached before full const-accel phase
+    // solve: v = j*t1^2 / 2  => t1 = sqrt(2v/j) (only jerk phases)
+    // but cap: v <= 2*va means we can't reach v with this jerk/accel
+    // Simpler: use trapezoidal fallback with just jerk phases
+    const t1=Math.sqrt(v/j);
+    tAccel=2*t1;
+    dAccel=2*(j*t1*t1*t1/6 + v/2*t1); // approx
+  }
+
+  // Full accel + decel distance (no const vel)
+  const dFullAD=2*dAccel;
+  if(dist<=dFullAD){
+    // Short trip: scale time (no const-vel phase)
+    // Approximate by ratio
+    const ratio=Math.sqrt(dist/dFullAD);
+    return 2*tAccel*ratio;
+  }
+  // Const-vel phase
+  const dConst=dist-dFullAD;
+  const tConst=dConst/v;
+  return 2*tAccel+tConst;
+}
+
+// ============================================================
+// POPULATION
+// ============================================================
+function genPop(cfg,floors){
+  const units=[];let uid=0;
+  for(const f of floors){
+    if(f<cfg.resStart)continue;
+    for(let u=0;u<cfg.upf;u++){
+      uid++;
+      const mc=wc([1,2,3,4,5],cfg.hhDist);
+      const mems=[];
+      for(let m=0;m<mc;m++)mems.push({id:`${uid}-${m+1}`,floor:f,unit:u+1,uid,hasSr:rnd()<cfg.srRate});
+      units.push({id:uid,floor:f,unit:u+1,mems});
+    }
+  }
+  return units;
+}
+
+// ============================================================
+// EVENTS
+// ============================================================
+function genEvents(units,cfg){
+  const peak=cfg.peak;
+  const aboveLob=cfg.lob.filter(f=>f>0);
+  const belowLob=cfg.lob.filter(f=>f<=0);
+  const am=cfg.am;
+  const pickA=()=>aboveLob.length?aboveLob[ri(0,aboveLob.length-1)]:1;
+  const pickB=()=>belowLob.length?belowLob[ri(0,belowLob.length-1)]:-1;
+  const events=[];
+
+  for(const unit of units){
+    for(const mem of unit.mems){
+      // 현실적 외출 횟수: 하루 0~4회, 0회는 재택/병가 등 극소수
+      // 가중치: 0회(3%), 1회(30%), 2회(40%), 3회(20%), 4회(7%)
+      const nTrips=wc([0,1,2,3,4],[3,30,40,20,7]);
+      let lastEnter=-1;
+      for(let t=0;t<nTrips;t++){
+        const exitHr=wc(Array.from({length:24},(_,h)=>h),peak);
+        let exitSec=exitHr*3600+ri(0,3599);
+        if(lastEnter>=0&&exitSec<lastEnter+600)exitSec=lastEnter+ri(600,1800);
+        if(exitSec>=86000)continue;
+        const isMorn=exitHr>=6&&exitHr<=9;
+        let enterSec;
+        if(isMorn&&rnd()<0.90){const rh=wc([17,18,19,20,21],[10,25,30,25,10]);enterSec=rh*3600+ri(0,3599);}
+        else{const dur=wc([1200,3600,7200,21600],[10,30,40,20]);enterSec=Math.min(exitSec+dur+ri(-300,300),86200);}
+        if(enterSec<=exitSec+300)enterSec=exitSec+ri(600,3600);
+        enterSec=Math.min(enterSec,86300);
+
+        const useB=belowLob.length>0&&rnd()<0.3;
+        const exitDest=useB?pickB():pickA();
+        events.push({time:exitSec,uid:mem.id,from:mem.floor,to:exitDest,hasSr:mem.hasSr,type:'exit',memRef:mem});
+        events.push({time:enterSec,uid:mem.id,from:exitDest,to:mem.floor,hasSr:mem.hasSr,type:'enter',memRef:mem});
+        lastEnter=enterSec;
+      }
+      // Amenity
+      if(am.length>0&&rnd()<0.3){
+        const af=am[ri(0,am.length-1)];
+        const aHr=wc([10,11,14,15,16,19,20,21],[1,1,2,2,2,3,3,1]);
+        const aTime=aHr*3600+ri(0,3599);
+        const dur=wc([240,1800,3600],[70,20,10]);
+        events.push({time:aTime,uid:mem.id,from:mem.floor,to:af,hasSr:mem.hasSr,type:'amen',memRef:mem});
+        events.push({time:Math.min(aTime+dur,86300),uid:mem.id,from:af,to:mem.floor,hasSr:mem.hasSr,type:'amen_ret',memRef:mem});
+      }
+    }
+  }
+  events.sort((a,b)=>a.time-b.time);
+  return validateEv(events);
+}
+
+function validateEv(evs){
+  const st={};const out=[];
+  for(const ev of evs){
+    if(!st[ev.uid])st[ev.uid]={out:false};
+    const s=st[ev.uid];
+    if(ev.type==='exit'||ev.type==='amen'){if(s.out)continue;s.out=true;out.push(ev);}
+    else{if(!s.out)continue;s.out=false;out.push(ev);}
+  }
+  return out;
+}
+
+// ============================================================
+// PRIORITY QUEUE
+// ============================================================
+class PQ{
+  constructor(){this.h=[]}
+  push(v){this.h.push(v);this._up(this.h.length-1)}
+  pop(){const t=this.h[0],b=this.h.pop();if(this.h.length){this.h[0]=b;this._dn(0)}return t}
+  get size(){return this.h.length}
+  _up(i){while(i>0){const p=(i-1)>>1;if(this.h[p].t<=this.h[i].t)break;[this.h[p],this.h[i]]=[this.h[i],this.h[p]];i=p}}
+  _dn(i){for(;;){let s=i,l=2*i+1,r=2*i+2;if(l<this.h.length&&this.h[l].t<this.h[s].t)s=l;if(r<this.h.length&&this.h[r].t<this.h[s].t)s=r;if(s===i)break;[this.h[s],this.h[i]]=[this.h[i],this.h[s]];i=s}}
+}
+
+// ============================================================
+// 엘리베이터 군관리 — ETA 기반 최근접 배차
+// ============================================================
+/*
+  실제 고층 아파트 군관리 방식과 동일:
+  - 호출 발생 시 각 엘리베이터의 예상도착시간(ETA)을 계산
+  - ETA 최소 엘리베이터에 배차 (같은 목적지 카에 보너스)
+  - 엘리베이터는 LOOK 알고리즘으로 정차 순서 결정
+*/
+function elevETA(elev,floor,now,cfg){
+  // Simulate elevator path to compute actual arrival time at floor
+  let pos=elev.pos,t=Math.max(elev.freeAt,now);
+  const stops=[...elev.assigned].sort((a,b)=>{
+    // LOOK order: sort by current direction preference
+    if(elev.dir===0)return Math.abs(a-pos)-Math.abs(b-pos);
+    if(elev.dir===1)return a<pos?1e9+a:a-pos;
+    return a>pos?1e9-a:pos-a;
+  });
+  for(const s of stops){
+    const tt=sCurveTravelSec(cfg,pos,s);
+    t+=tt+8; // door time estimate
+    pos=s;
+    if(s===floor)return t;
+  }
+  // Floor not yet in stops — append
+  const tt=sCurveTravelSec(cfg,pos,floor);
+  return t+tt;
+}
+
+function doorTime(hasBoarding){return hasBoarding?(rnd()<0.80?5:11):8}
+
+function runSim(events,cfg,srMode){
+  const ne=cfg.ne,idleH=cfg.idleH,idleT=cfg.idleT;
+  const elevs=Array.from({length:ne},(_,i)=>({
+    id:i,
+    pos:i<Math.ceil(ne/2)?idleH:1,
+    dir:0,
+    pass:[],
+    assigned:new Set(), // ETA 배차 시 예약된 정차 층
+    freeAt:0,
+    lastActivityAt:0,
+    isIdle:false,
+    idlePos:i<Math.ceil(ne/2)?idleH:1,
+  }));
+
+  const waitQ={};  // floor -> [{uid,to,callTime,hasSr,type,isGhost,assignedElev}]
+  const callLog=[];
+  let totalWait=0,totalRide=0;
+  const hWait=Array(24).fill(0),hRide=Array(24).fill(0);
+  const pq=new PQ();
+
+  for(const ev of events)pq.push({t:ev.time,k:'P',ev});
+
+  const maxPass=Math.floor(cfg.cap/75);
+
+  function assignElevator(floor,destFloor,now){
+    let best=null,bestETA=Infinity;
+    for(const e of elevs){
+      if(e.pass.length>=maxPass)continue;
+      const eta=elevETA(e,floor,now,cfg);
+      const bonus=e.assigned.has(destFloor)?-20:0;
+      if(eta+bonus<bestETA){bestETA=eta+bonus;best=e}
+    }
+    if(!best)best=elevs.reduce((a,b)=>elevETA(a,floor,now,cfg)<elevETA(b,floor,now,cfg)?a:b);
+    return best;
+  }
+
+  function schedNext(e,now){
+    if(e.assigned.size===0){
+      e.dir=0;
+      // Schedule idle return after idleT seconds
+      pq.push({t:now+idleT,k:'IDLE',eid:e.id,scheduledAt:now});
+      return;
+    }
+    // LOOK algorithm on assigned stops
+    const stops=[...e.assigned].sort((a,b)=>a-b);
+    let next;
+    if(e.dir===1)next=stops.find(f=>f>e.pos)||stops[stops.length-1];
+    else if(e.dir===-1)next=[...stops].reverse().find(f=>f<e.pos)||stops[0];
+    else next=stops.reduce((a,b)=>Math.abs(a-e.pos)<Math.abs(b-e.pos)?a:b);
+    const tt=sCurveTravelSec(cfg,e.pos,next);
+    const arr=Math.max(now,e.freeAt)+tt;
+    e.dir=next>e.pos?1:next<e.pos?-1:0;
+    e.freeAt=arr;
+    e.isIdle=false;
+    pq.push({t:arr,k:'ARR',eid:e.id,floor:next});
+  }
+
+  while(pq.size>0){
+    const ev=pq.pop();
+
+    if(ev.k==='P'){
+      const{t,ev:{time,uid,from,to,hasSr,type}}=ev;
+      if(from===to)continue;
+
+      // Ghost: srMode + exit + hasSr → elevator called to lobby (=to) by Bluetooth
+      if(srMode&&type==='exit'&&hasSr){
+        const ghostElev=assignElevator(to,to,time); // call to lobby
+        ghostElev.assigned.add(to);
+        if(ghostElev.dir===0)schedNext(ghostElev,Math.max(ghostElev.freeAt,time));
+        callLog.push({time,uid:uid+'_g',from:to,to,type:'ghost',hasSr,waitTime:0,rideTime:0,hour:time/3600|0,elevId:ghostElev.id,alightTime:time});
+        ghostElev.lastActivityAt=time;
+      }
+
+      // 실제 호출: ETA 기반 배차
+      const elev=assignElevator(from,to,time);
+      elev.assigned.add(from); // pickup floor
+      elev.assigned.add(to);   // 목적지 사전 등록
+      elev.lastActivityAt=time;
+      if(!waitQ[from])waitQ[from]=[];
+      waitQ[from].push({uid,to,callTime:time,hasSr,type,isGhost:false,assignedElev:elev.id});
+      if(elev.dir===0)schedNext(elev,Math.max(elev.freeAt,time));
+
+    } else if(ev.k==='ARR'){
+      const e=elevs[ev.eid];const floor=ev.floor;
+      e.pos=floor;e.assigned.delete(floor);e.lastActivityAt=ev.t;
+
+      // Alight passengers going to this floor
+      const staying=[];
+      for(const p of e.pass){
+        if(p.to===floor){
+          const rt=Math.round(ev.t-p.boardTime);
+          totalRide+=rt;hRide[Math.floor(p.callTime/3600)]+=rt;
+          const le=callLog.find(c=>c.uid===p.uid&&c.type===p.type&&Math.abs(c.time-p.callTime)<5);
+          if(le){le.rideTime=rt;le.alightTime=ev.t}
+        } else staying.push(p);
+      }
+      e.pass=staying;
+
+      // Handle ghost (door must open 8s, no boarding)
+      const ghosts=(waitQ[floor]||[]).filter(p=>p.isGhost);
+      const reals=(waitQ[floor]||[]).filter(p=>!p.isGhost&&(p.assignedElev===e.id||p.assignedElev===undefined));
+      waitQ[floor]=(waitQ[floor]||[]).filter(p=>!p.isGhost&&p.assignedElev!==e.id);
+
+      // Board assigned passengers
+      let bCount=0;
+      for(const p of reals){
+        if(e.pass.length>=maxPass)break;
+        const wt=Math.round(ev.t-p.callTime);
+        totalWait+=wt;hWait[Math.floor(p.callTime/3600)]+=wt;
+        e.pass.push({uid:p.uid,to:p.to,boardTime:ev.t,callTime:p.callTime,type:p.type});
+        // 목적지는 배차 시 이미 등록됨
+        e.assigned.add(p.to);
+        callLog.push({time:p.callTime,uid:p.uid,from:floor,to:p.to,type:p.type,hasSr:p.hasSr,waitTime:wt,rideTime:0,hour:p.callTime/3600|0,elevId:e.id,alightTime:null});
+        bCount++;
+      }
+
+      const hasBoarded=bCount>0;
+      const hasGhost=ghosts.length>0;
+      let dt=doorTime(hasBoarded);
+      if(hasGhost)dt=Math.max(dt,8);
+      e.freeAt=ev.t+dt;
+      schedNext(e,e.freeAt);
+
+    } else if(ev.k==='IDLE'){
+      // Idle return: only act if elevator still idle (no new calls since scheduled)
+      const e=elevs[ev.eid];
+      if(e.assigned.size===0&&ev.t-e.lastActivityAt>=idleT-1){
+        // Return to home position
+        const target=e.idlePos;
+        if(Math.round(e.pos)!==target){
+          e.assigned.add(target);
+          schedNext(e,Math.max(e.freeAt,ev.t));
+        }
+        e.isIdle=true;
+      }
+    }
+  }
+
+  return{totalWait:Math.round(totalWait),totalRide:Math.round(totalRide),callLog,hWait,hRide};
+}
+
+// ============================================================
+// STATISTICS ENGINE
+// ============================================================
+// statsDB: {seedN: {tA, tB, waitA, waitB, ghosts}} — max 100 entries (seed 0..99)
+let statsDB={};
+
+function getSeedList(){return Array.from({length:100},(_,i)=>i)}
+
+function recordResult(seed,rA,rB){
+  const key=String(seed);
+  // Always overwrite (update if re-run)
+  statsDB[key]={
+    seed,
+    tA:rA.totalWait+rA.totalRide,
+    tB:rB.totalWait+rB.totalRide,
+    waitA:rA.totalWait,waitB:rB.totalWait,
+    rideA:rA.totalRide,rideB:rB.totalRide,
+    ghosts:rB.callLog.filter(c=>c.type==='ghost').length,
+  };
+  updateStatsUI();
+}
+
+function computeStats(){
+  const vals=Object.values(statsDB);
+  if(vals.length===0)return null;
+  const n=vals.length;
+  // Arrays
+  const tAs=vals.map(v=>v.tA),tBs=vals.map(v=>v.tB),diffs=vals.map(v=>v.tB-v.tA);
+  const mean=arr=>arr.reduce((a,b)=>a+b,0)/arr.length;
+  const std=arr=>{const m=mean(arr);return Math.sqrt(arr.reduce((a,b)=>a+(b-m)**2,0)/(arr.length-1||1))};
+  const mA=mean(tAs),mB=mean(tBs),mD=mean(diffs);
+  const sA=std(tAs),sB=std(tBs),sD=std(diffs);
+  const se=sD/Math.sqrt(n);
+  const t_stat=se>0?mD/se:0;
+  // Two-tailed p-value approximation (t-distribution, large n → normal)
+  const pVal=2*(1-normalCDF(Math.abs(t_stat)));
+  // 95% CI for diff
+  const z95=1.96;
+  const ciLo=mD-z95*se,ciHi=mD+z95*se;
+  // 95% CI for each mean
+  const ciA=[mA-z95*sA/Math.sqrt(n),mA+z95*sA/Math.sqrt(n)];
+  const ciB=[mB-z95*sB/Math.sqrt(n),mB+z95*sB/Math.sqrt(n)];
+  return{n,mA,mB,mD,sA,sB,sD,se,t_stat,pVal,ciLo,ciHi,ciA,ciB,
+    mGhost:mean(vals.map(v=>v.ghosts)),
+    mWaitA:mean(vals.map(v=>v.waitA)),mWaitB:mean(vals.map(v=>v.waitB)),
+  };
+}
+
+function normalCDF(z){
+  // Abramowitz & Stegun approximation
+  const t=1/(1+0.2316419*Math.abs(z));
+  const poly=t*(0.319381530+t*(-0.356563782+t*(1.781477937+t*(-1.821255978+t*1.330274429))));
+  const c=1-0.3989422803*Math.exp(-0.5*z*z)*poly;
+  return z>=0?c:1-c;
+}
+
+function updateStatsUI(){
+  const n=Object.keys(statsDB).length;
+  // Badge
+  const b=document.getElementById('stats-cnt-badge');
+  b.textContent=n;b.style.display=n>0?'':'none';
+  // Progress ring
+  const pct=n/100;
+  const circ=339.3;
+  document.getElementById('pr-fill').style.strokeDashoffset=circ*(1-pct);
+  document.getElementById('pr-text').textContent=`${n}/100`;
+  // Seed grid
+  buildSeedGrid();
+  // Cards
+  const st=computeStats();
+  if(!st||n<2){document.getElementById('stat-cards-wrap').innerHTML='<div class="ph" style="height:150px"><div class="ic" style="font-size:24px">📈</div><p>2개 이상 결과 필요</p></div>';return;}
+  renderStatCards(st,n);
+}
+
+function buildSeedGrid(){
+  const g=document.getElementById('seed-grid');if(!g)return;
+  g.innerHTML='';
+  for(let s=0;s<100;s++){
+    const has=statsDB[String(s)];
+    const cls='seed-cell '+(has?'done-ab':'');
+    g.innerHTML+=`<div class="${cls}" title="시드 ${s}${has?' (완료)':''}" onclick="runSeed(${s})">${s}</div>`;
+  }
+}
+
+function renderStatCards(st,n){
+  const fmt2=s=>s<60?s.toFixed(1)+'초':s<3600?(s/60).toFixed(1)+'분':(s/3600).toFixed(2)+'시간';
+  const pStr=st.pVal<0.001?'< 0.001':st.pVal.toFixed(4);
+  const sig=st.pVal<0.05;
+  document.getElementById('stat-cards-wrap').innerHTML=`
+    <div class="stat-cards">
+      <div class="sc">
+        <h4>📊 표본 요약 (n=${n})</h4>
+        <div class="sc-row"><span class="lbl">스르륵패스 없음 — 평균 총시간</span><span class="val val-a">${fmt2(st.mA)}</span></div>
+        <div class="sc-row"><span class="lbl">스르륵패스 있음 — 평균 총시간</span><span class="val val-b">${fmt2(st.mB)}</span></div>
+        <div class="sc-row"><span class="lbl">평균 차이 (있음 − 없음)</span><span class="val val-diff">+${fmt2(st.mD)}</span></div>
+        <div class="sc-row"><span class="lbl">없음 표준편차</span><span class="val">${fmt2(st.sA)}</span></div>
+        <div class="sc-row"><span class="lbl">있음 표준편차</span><span class="val">${fmt2(st.sB)}</span></div>
+        <div class="sc-row"><span class="lbl">평균 유령호출</span><span class="val val-diff">${st.mGhost.toFixed(1)}회</span></div>
+      </div>
+      <div class="sc">
+        <h4>🔬 대응표본 t-검정</h4>
+        <div class="sc-row"><span class="lbl">t 통계량</span><span class="val">${st.t_stat.toFixed(3)}</span></div>
+        <div class="sc-row"><span class="lbl">p 값 (양측)</span><span class="val ${sig?'val-ok':'val-p'}">${pStr}</span></div>
+        <div class="sc-row"><span class="lbl">유의미 여부 (α=0.05)</span><span class="val ${sig?'val-ok':'val-diff'}">${sig?'✓ 유의미':'✗ 불충분'}</span></div>
+        <div class="sc-row"><span class="lbl">차이 95% CI 하한</span><span class="val">+${fmt2(st.ciLo)}</span></div>
+        <div class="sc-row"><span class="lbl">차이 95% CI 상한</span><span class="val">+${fmt2(st.ciHi)}</span></div>
+        <div class="sc-row"><span class="lbl">표준오차 (SE)</span><span class="val">${fmt2(st.se)}</span></div>
+      </div>
+      <div class="sc">
+        <h4>📐 스르륵패스 없음 — 95% CI</h4>
+        <div class="sc-row"><span class="lbl">하한</span><span class="val val-a">${fmt2(st.ciA[0])}</span></div>
+        <div class="sc-row"><span class="lbl">평균</span><span class="val val-a">${fmt2(st.mA)}</span></div>
+        <div class="sc-row"><span class="lbl">상한</span><span class="val val-a">${fmt2(st.ciA[1])}</span></div>
+        <div class="sc-row"><span class="lbl">평균 대기시간</span><span class="val val-a">${fmt2(st.mWaitA)}</span></div>
+      </div>
+      <div class="sc">
+        <h4>📐 스르륵패스 있음 — 95% CI</h4>
+        <div class="sc-row"><span class="lbl">하한</span><span class="val val-b">${fmt2(st.ciB[0])}</span></div>
+        <div class="sc-row"><span class="lbl">평균</span><span class="val val-b">${fmt2(st.mB)}</span></div>
+        <div class="sc-row"><span class="lbl">상한</span><span class="val val-b">${fmt2(st.ciB[1])}</span></div>
+        <div class="sc-row"><span class="lbl">평균 대기시간</span><span class="val val-b">${fmt2(st.mWaitB)}</span></div>
+      </div>
+    </div>
+    <div style="font-size:10px;color:var(--muted);padding:6px 0">
+      ※ 대응표본 t-검정 (paired t-test): 동일 모집단에 A·B 시나리오를 반복 적용. 
+      p &lt; 0.05 → 스르륵패스의 추가 대기 비용이 통계적으로 유의미함.
+    </div>`;
+}
+
+function clearStats(){
+  if(!confirm('모든 시뮬레이션 결과를 초기화하시겠습니까?'))return;
+  statsDB={};updateStatsUI();
+}
+
+// ============================================================
+// RUN SINGLE SEED
+// ============================================================
+async function runSeed(seed,quiet=false){
+  const cfg=getCfg(seed);
+  cfg._fl=buildFloors(cfg);
+  sRng(999999); // 세대 배치 항상 고정
+  const units=genPop(cfg,cfg._fl);
+  sRng(seed);
+  const events=genEvents(units,cfg);
+  sRng(seed+1);
+  const rA=runSim(events,cfg,false);
+  sRng(seed+1);
+  const rB=runSim(events,cfg,true);
+  recordResult(seed,rA,rB);
+  if(!quiet){buildSeedGrid();}
+  return{rA,rB,cfg,units,events};
+}
+
+// ============================================================
+// RUN ALL 100 SEEDS
+// ============================================================
+let runningAll=false;
+async function runAllSeeds(){
+  if(runningAll)return;
+  runningAll=true;
+  const btn=document.getElementById('run-all-btn');
+  btn.disabled=true;btn.textContent='⏳ 실행 중...';
+  for(let s=0;s<100;s++){
+    // Mark as running
+    const cell=document.querySelector(`#seed-grid .seed-cell:nth-child(${s+1})`);
+    if(cell)cell.className='seed-cell running';
+    await runSeed(s,true);
+    updateStatsUI();
+    if(s%5===4)await tick(); // yield to UI every 5 seeds
+  }
+  runningAll=false;
+  btn.disabled=false;btn.textContent='⚡ 100시드 전체 실행';
+}
+
+// ============================================================
+// MAIN SINGLE SIM (for animation)
+// ============================================================
+let gCfg,gFloors,gUnits,gEvs,gA,gB,gSeed;
+let animRunning=false,animPaused=false,animSpd=60,animT=0,animLast=null,animRAF=null;
+const FLPH=16;
+
+async function startSim(){
+  const pSum=['hh1','hh2','hh3','hh4','hh5'].reduce((s,id)=>s+(+document.getElementById(id).value||0),0);
+  if(pSum!==100){alert('가구원수 분포 합계 100% 필요. 현재: '+pSum+'%');return}
+  const btn=document.getElementById('run-btn');
+  btn.disabled=true;btn.textContent='⏳ 실행 중...';
+  showProg(0,'설정 로드...');await tick();
+
+  const seed=+document.getElementById('c-seed').value||42;
+  gSeed=seed;
+  document.getElementById('cur-seed-disp').textContent='#'+seed;
+
+  const cfg=getCfg(seed);cfg._fl=buildFloors(cfg);
+  gCfg=cfg;gFloors=cfg._fl;
+  // 세대 구성은 항상 고정 시드(설정값과 무관)로 생성 → 시드가 달라져도 동일 세대 배치
+  sRng(999999);
+  showProg(10,'입주민 생성...');await tick();
+  gUnits=genPop(cfg,cfg._fl);
+  const totRes=gUnits.reduce((s,u)=>s+u.mems.length,0);
+
+  showProg(25,'이벤트 생성...');await tick();
+  sRng(seed);gEvs=genEvents(gUnits,cfg);
+
+  showProg(45,'시나리오 A...');await tick();
+  sRng(seed+1);gA=runSim(gEvs,cfg,false);gA.evs=gEvs;gA.units=gUnits;
+
+  showProg(72,'시나리오 B...');await tick();
+  sRng(seed+1);gB=runSim(gEvs,cfg,true);gB.evs=gEvs;gB.units=gUnits;
+
+  showProg(90,'결과 기록 및 렌더링...');await tick();
+  recordResult(seed,gA,gB);
+
+  const srU=gUnits.reduce((s,u)=>s+u.mems.filter(m=>m.hasSr).length,0);
+  buildAll(cfg,gUnits,gA,gB,totRes,srU);
+
+  btn.disabled=false;btn.textContent='▶ 이 시드로 실행';
+  hideProg();
+}
+
+function tick(){return new Promise(r=>setTimeout(r,16))}
+
+// ============================================================
+// PROGRESS
+// ============================================================
+function showProg(p,lbl){
+  const body=document.getElementById('anim-body');
+  let box=document.getElementById('prog-inner');
+  if(!box){
+    body.innerHTML=`<div class="prog-wrap"><div class="prog-box2" id="prog-inner"><div class="pt">시뮬레이션 실행 중</div><div class="ptrack"><div class="pfill" id="pf" style="width:0%"></div></div><div class="plbl" id="pl">준비</div></div></div>`;
+  }
+  document.getElementById('pf').style.width=p+'%';
+  document.getElementById('pl').textContent=lbl;
+}
+function hideProg(){document.querySelector('.prog-wrap')&&document.querySelector('.prog-wrap').remove()}
+
+// ============================================================
+// BUILD ALL UI
+// ============================================================
+const fmt=s=>s<60?Math.round(s)+'초':s<3600?Math.floor(s/60)+'분'+Math.round(s%60)+'초':Math.floor(s/3600)+'시간'+Math.floor(s%3600/60)+'분';
+const hms=s=>[s/3600,s%3600/60,s%60].map(v=>String(Math.floor(v)).padStart(2,'0')).join(':');
+
+function buildAll(cfg,units,rA,rB,totRes,srU){
+  const tA=rA.totalWait+rA.totalRide,tB=rB.totalWait+rB.totalRide;
+  const diff=tB-tA,pct=tA>0?((diff/tA)*100).toFixed(1):0;
+  const ghosts=rB.callLog.filter(c=>c.type==='ghost').length;
+  document.getElementById('hbadges').innerHTML=
+    `<span class="badge ba">${totRes}명</span><span class="badge bb">${srU}명 스르륵</span><span class="badge br">유령 ${ghosts}회</span><span class="badge bg2">+${pct}%</span>`;
+  buildAnimPanel(cfg,units,rA,rB);
+  buildResPanel(cfg,units,rA,rB,totRes,srU,tA,tB,diff,pct,ghosts);
+  buildLogPanel(rA,rB);
+  buildHHPanel(units,rA,rB);
+}
+
+// ============================================================
+// ANIM PANEL
+// ============================================================
+let animFloorList=[];
+
+function buildAnimPanel(cfg,units,rA,rB){
+  const body=document.getElementById('anim-body');
+  const floors=[...cfg._fl].reverse();
+  animFloorList=floors;
+
+  const mkVis=(id,sc)=>{
+    const th=floors.length*FLPH;
+    let rows='';
+    for(const f of floors){
+      const isRes=f>=cfg.resStart,isLob=cfg.lob.includes(f),isAm=cfg.am.includes(f);
+      const cls='fl-bar'+(isRes?' res':'')+(isLob?' lobby':'')+(isAm?' amen':'');
+      rows+=`<div class="fl-row"><div class="fl-lbl">${flL(f)}</div>
+        <div class="${cls}" id="${id}fb${f}"><span style="font-size:6px;color:var(--muted);margin-right:2px">${isLob?'🚪':isAm?'🎭':''}</span><span id="${id}fp${f}"></span></div></div>`;
+    }
+    let elvs='';
+    for(let i=0;i<cfg.ne;i++){
+      elvs+=`<div class="e-shaft"><div class="e-shaft-lbl">E${i+1}</div>
+        <div class="e-track" style="height:${th}px">
+          <div class="e-car idle" id="${id}ec${i}" style="height:${FLPH-3}px;top:0">${i+1}</div>
+        </div></div>`;
+    }
+    return`<div class="vis-col"><div class="vis-hdr ${sc==='A'?'ha':'hb'}"><h3>${sc==='A'?'A — 스르륵패스 없음':'B — 스르륵패스 있음'}</h3></div>
+      <div class="vis-live">
+        <div class="vlc"><div class="vll">대기인원</div><div class="vlv" id="${id}lw">0명</div></div>
+        <div class="vlc"><div class="vll">탑승중</div><div class="vlv" id="${id}lr">0명</div></div>
+        <div class="vlc"><div class="vll">유령(누적)</div><div class="vlv" id="${id}lg" style="color:var(--danger)">0회</div></div>
+        <div class="vlc"><div class="vll">누적대기</div><div class="vlv" id="${id}lt">0초</div></div>
+      </div>
+      <div class="vis-scroll"><div class="bld-wrap"><div>${rows}</div><div class="elvs-col">${elvs}</div></div></div>
+    </div>`;
+  };
+  body.innerHTML=mkVis('a','A')+mkVis('b','B');
+  resetAnim();
+}
+
+function floorToY(f){
+  const idx=animFloorList.indexOf(Math.round(f));
+  return idx<0?0:idx*FLPH;
+}
+
+function renderBoth(t){
+  document.getElementById('t-disp').textContent=hms(Math.floor(t));
+  if(gA)renderVis('a',gA,t,false);
+  if(gB)renderVis('b',gB,t,true);
+}
+
+function renderVis(id,rData,t,isSr){
+  const waitByFloor={};
+  let waiting=0,riding=0,ghosts=0,cumWait=0;
+  for(const c of rData.callLog){
+    if(c.time>t)break;
+    if(c.type==='ghost'){ghosts++;continue}
+    const wEnd=c.time+(c.waitTime||0);
+    const aEnd=c.alightTime||1e9;
+    if(t<wEnd){waitByFloor[c.from]=(waitByFloor[c.from]||0)+1;waiting++;cumWait+=Math.min(t-c.time,c.waitTime||0);}
+    else if(t<aEnd)riding++;
+    if(t>=wEnd)cumWait+=c.waitTime||0;
+  }
+  for(const f of animFloorList){
+    const el=document.getElementById(`${id}fp${f}`);if(!el)continue;
+    const cnt=waitByFloor[f]||0;
+    let html='';const show=Math.min(cnt,10);
+    for(let i=0;i<show;i++)html+=`<div class="pdot w"></div>`;
+    if(cnt>10)html+=`<span style="font-size:6px;color:var(--warn)">+${cnt-10}</span>`;
+    el.innerHTML=html;
+  }
+  // Elevators
+  const byElev={};
+  for(const c of rData.callLog){if(c.time>t||c.type==='ghost')continue;if(!byElev[c.elevId])byElev[c.elevId]=[];byElev[c.elevId].push(c)}
+  for(let i=0;i<(gCfg?.ne||4);i++){
+    const car=document.getElementById(`${id}ec${i}`);if(!car)continue;
+    const calls=byElev[i]||[];
+    let posF=i<Math.ceil((gCfg?.ne||4)/2)?(gCfg?.idleH||24):1,cls='idle';
+    if(calls.length>0){
+      const last=calls[calls.length-1];
+      const wEnd=last.time+(last.waitTime||0);
+      if(t<wEnd){const r=Math.min(1,(t-last.time)/(last.waitTime||1));posF=last.from;cls='run';}
+      else if(!last.alightTime||t<last.alightTime){
+        const rE=last.alightTime||wEnd+(last.rideTime||1);
+        const r=Math.min(1,(t-wEnd)/((rE-wEnd)||1));
+        posF=last.from+(last.to-last.from)*r;cls='run';
+      } else {posF=last.to;cls='idle';}
+    }
+    const isGhostNow=isSr&&rData.callLog.some(c=>c.type==='ghost'&&c.elevId===i&&Math.abs(c.time-t)<12);
+    if(isGhostNow)cls='ghost';
+    car.className=`e-car ${cls}`;
+    car.style.top=floorToY(posF)+'px';
+    car.textContent=flL(Math.round(posF));
+  }
+  document.getElementById(`${id}lw`).textContent=waiting+'명';
+  document.getElementById(`${id}lr`).textContent=riding+'명';
+  document.getElementById(`${id}lg`).textContent=ghosts+'회';
+  document.getElementById(`${id}lt`).textContent=fmt(Math.round(cumWait));
+}
+
+function animFrame(ts){
+  if(!animRunning||animPaused){animLast=null;return}
+  if(!animLast)animLast=ts;
+  const dt=(ts-animLast)/1000;animLast=ts;
+  animT+=dt*animSpd;
+  if(animT>=86400){animT=86400;stopAnim();renderBoth(animT);return}
+  renderBoth(animT);
+  animRAF=requestAnimationFrame(animFrame);
+}
+function togglePlay(){
+  if(!gA){alert('먼저 시뮬레이션을 실행하세요');return}
+  if(animRunning&&!animPaused){animPaused=true;const b=document.getElementById('btn-play');b.textContent='▶ 재생';b.classList.remove('on');}
+  else{animRunning=true;animPaused=false;const b=document.getElementById('btn-play');b.textContent='⏸ 일시정지';b.classList.add('on');animRAF=requestAnimationFrame(animFrame);}
+}
+function stopAnim(){animRunning=false;const b=document.getElementById('btn-play');if(b){b.textContent='▶ 재생';b.classList.remove('on')}}
+function resetAnim(){stopAnim();animT=0;animLast=null;if(gA)renderBoth(0)}
+
+// ============================================================
+// RESULT
+// ============================================================
+function buildResPanel(cfg,units,rA,rB,totRes,srU,tA,tB,diff,pct,ghosts){
+  const rb=document.getElementById('res-body');rb.className='res-body';
+  rb.innerHTML=`
+    <div class="cmp2">
+      <div class="cc ca"><h3>📗 A — 스르륵패스 없음</h3>
+        <div class="bn">${fmt(tA)}</div>
+        <div class="si">대기: ${fmt(rA.totalWait)} | 탑승: ${fmt(rA.totalRide)}<br>총 호출: ${rA.callLog.length.toLocaleString()}회<br>1인 평균 대기: ${fmt(Math.round(rA.totalWait/totRes))}</div>
+      </div>
+      <div class="cc cb"><h3>📙 B — 스르륵패스 있음</h3>
+        <div class="bn">${fmt(tB)}</div>
+        <div class="si">대기: ${fmt(rB.totalWait)} | 탑승: ${fmt(rB.totalRide)}<br>실제 호출: ${rB.callLog.filter(c=>c.type!=='ghost').length.toLocaleString()}회 | 유령: <span style="color:var(--danger)">${ghosts}</span>회<br>1인 평균 대기: ${fmt(Math.round(rB.totalWait/totRes))}</div>
+      </div>
+    </div>
+    <div class="diffbar"><div>
+      <div style="font-size:9px;color:var(--muted);margin-bottom:2px">⚡ 스르륵패스 유발 추가 비용</div>
+      <div class="dn">+${fmt(diff)}</div>
+      <div class="dp">+${pct}% | 유령 ${ghosts}회 | 1인/일 +${fmt(Math.round(diff/totRes))}</div>
+    </div></div>
+    <div class="s6">
+      <div class="s6c"><div class="sl">총 입주민</div><div class="sv">${totRes.toLocaleString()}명</div></div>
+      <div class="s6c"><div class="sl">스르륵패스</div><div class="sv">${srU.toLocaleString()}명</div></div>
+      <div class="s6c"><div class="sl">유령 호출</div><div class="sv" style="color:var(--danger)">${ghosts.toLocaleString()}회</div></div>
+      <div class="s6c"><div class="sl">총 이동 이벤트</div><div class="sv">${rA.evs.length.toLocaleString()}건</div></div>
+      <div class="s6c"><div class="sl">A 1인 평균 대기</div><div class="sv">${fmt(Math.round(rA.totalWait/totRes))}</div></div>
+      <div class="s6c"><div class="sl">B 1인 평균 대기</div><div class="sv" style="color:var(--acc2)">${fmt(Math.round(rB.totalWait/totRes))}</div></div>
+    </div>
+    <div class="hchart"><div class="hct">시간대별 총 대기+탑승 시간</div>${mkHour(rA,rB)}</div>`;
+}
+
+function mkHour(rA,rB){
+  const hA=rA.hWait.map((v,i)=>v+(rA.hRide[i]||0));
+  const hB=rB.hWait.map((v,i)=>v+(rB.hRide[i]||0));
+  const hDiff=hA.map((v,i)=>hB[i]-v); // positive = B worse
+  const mx=Math.max(...hA,...hB,1);
+  const mxD=Math.max(...hDiff.map(Math.abs),1);
+  const bars=Array.from({length:24},(_,h)=>{
+    const pA=Math.max((hA[h]/mx)*100,1),pB=Math.max((hB[h]/mx)*100,1);
+    const diff=hDiff[h],pD=Math.abs(diff/mxD)*100;
+    return`<div class="hgrp" title="${h}시\n스르륵 없음: ${fmt(hA[h])}\n스르륵 있음: ${fmt(hB[h])}\n차이: ${diff>=0?'+':''}${fmt(diff)}">
+      <div class="hb bn2" style="height:${pA}%"></div>
+      <div class="hb bs" style="height:${pB}%"></div>
+    </div>`;
+  }).join('');
+  // diff chart
+  const diffBars=Array.from({length:24},(_,h)=>{
+    const d=hDiff[h],p=Math.max((Math.abs(d)/mxD)*100,1);
+    const col=d>0?'var(--danger)':'var(--acc3)';
+    return`<div style="flex:1;display:flex;flex-direction:column;align-items:center;justify-content:flex-end;height:40px">
+      <div style="width:80%;border-radius:2px 2px 0 0;min-height:1px;height:${p}%;background:${col};opacity:.8" title="${h}시 차이: ${d>=0?'+':''}${fmt(d)}"></div>
+    </div>`;
+  }).join('');
+  return`
+    <div style="margin-bottom:4px;font-size:9px;color:var(--muted)">전체 대기+탑승 합산</div>
+    <div class="hbars">${bars}</div>
+    <div class="hlbls">${Array.from({length:24},(_,h)=>`<span>${h}</span>`).join('')}</div>
+    <div class="leg">
+      <div class="leg-i"><div class="leg-d" style="background:var(--acc)"></div>스르륵패스 없음</div>
+      <div class="leg-i"><div class="leg-d" style="background:var(--acc2)"></div>스르륵패스 있음</div>
+    </div>
+    <div style="margin-top:12px;margin-bottom:4px;font-size:9px;color:var(--muted)">시간대별 차이 (있음 − 없음) <span style="color:var(--danger)">▲증가</span> <span style="color:var(--acc3)">▼감소</span></div>
+    <div style="display:flex;gap:2px;align-items:flex-end;height:40px">${diffBars}</div>
+    <div class="hlbls">${Array.from({length:24},(_,h)=>`<span>${h}</span>`).join('')}</div>`;
+}
+
+// ============================================================
+// LOG
+// ============================================================
+function buildLogPanel(rA,rB){
+  window._lA=rA.callLog.map(c=>({...c,sc:'A'}));
+  window._lB=rB.callLog.map(c=>({...c,sc:'B'}));
+  const lb=document.getElementById('log-body');
+  lb.innerHTML=`<div class="lctrl">
+    <input type="text" id="lq" placeholder="UID, 층수 검색..." oninput="filtLog()">
+    <select id="lsc" onchange="filtLog()"><option value="">A+B</option><option value="A">A만</option><option value="B">B만</option></select>
+    <select id="ltp" onchange="filtLog()"><option value="">전체</option><option value="ghost">유령</option><option value="exit">외출</option><option value="enter">귀가</option><option value="amen">문화시설</option></select>
+  </div>
+  <div class="twrap"><table><thead><tr><th>시각</th><th>구분</th><th>출발</th><th>도착</th><th>대기(초)</th><th>탑승(초)</th><th>스르륵</th><th>E</th><th>SC</th></tr></thead><tbody id="ltb"></tbody></table></div>
+  <div id="lcnt" style="font-size:9px;color:var(--muted);margin-top:4px"></div>`;
+  filtLog();
+}
+
+function filtLog(){
+  const q=(document.getElementById('lq')?.value||'').toLowerCase();
+  const sc=document.getElementById('lsc')?.value||'';
+  const tp=document.getElementById('ltp')?.value||'';
+  let d=sc==='A'?window._lA:sc==='B'?window._lB:[...(window._lA||[]),...(window._lB||[])].sort((a,b)=>a.time-b.time);
+  if(tp)d=d.filter(c=>c.type===tp);
+  if(q)d=d.filter(c=>String(c.uid).toLowerCase().includes(q)||flL(c.from).toLowerCase().includes(q)||flL(c.to).toLowerCase().includes(q));
+  const sh=d.slice(0,800);
+  const tb=document.getElementById('ltb');if(!tb)return;
+  tb.innerHTML=sh.map(c=>{
+    const tg=c.type==='ghost'?`<span class="tag t-gho">유령</span>`:c.type==='exit'?`<span class="tag t-exit">외출</span>`:c.type==='enter'?`<span class="tag t-ent">귀가</span>`:`<span class="tag t-am">${c.type}</span>`;
+    return`<tr><td>${hms(c.time)}</td><td>${tg}</td><td>${flL(c.from)}</td><td>${flL(c.to)}</td>
+      <td style="color:${c.waitTime>90?'var(--warn)':'inherit'}">${c.waitTime}</td><td>${c.rideTime}</td>
+      <td style="color:${c.hasSr?'var(--acc2)':'var(--muted)'}">${c.hasSr?'✓':'–'}</td>
+      <td>${c.elevId>=0?'E'+(c.elevId+1):'–'}</td>
+      <td><span class="badge ${c.sc==='A'?'ba':'bb'}">${c.sc}</span></td></tr>`;
+  }).join('');
+  const cnt=document.getElementById('lcnt');if(cnt)cnt.textContent=`${d.length.toLocaleString()}건 중 ${sh.length.toLocaleString()}건 표시`;
+}
+
+// ============================================================
+// HH
+// ============================================================
+function buildHHPanel(units,rA,rB){
+  window._hhu=units;window._hhrA=rA;window._hhrB=rB;
+  const hb=document.getElementById('hh-body');
+  hb.innerHTML=`<div class="lctrl">
+    <input type="text" id="hhq" placeholder="세대번호, 층수 검색..." oninput="filtHH()">
+    <select id="hhfl" onchange="filtHH()">
+      <option value="">전체 층</option>
+      ${(gCfg?._fl||[]).filter(f=>f>=(gCfg?.resStart||3)).map(f=>`<option value="${f}">${flL(f)}</option>`).join('')}
+    </select>
+  </div><div id="hhl"></div>`;
+  filtHH();
+}
+
+function filtHH(){
+  const units=window._hhu,rA=window._hhrA,rB=window._hhrB;if(!units)return;
+  const q=(document.getElementById('hhq')?.value||'').toLowerCase();
+  const flF=document.getElementById('hhfl')?.value;
+  let flt=units;
+  if(flF)flt=flt.filter(u=>u.floor===+flF);
+  if(q)flt=flt.filter(u=>String(u.id).includes(q)||flL(u.floor).toLowerCase().includes(q));
+  const sh=flt.slice(0,80);
+  const pcA={},pcB={};
+  (rA?.callLog||[]).forEach(c=>{if(!pcA[c.uid])pcA[c.uid]=[];pcA[c.uid].push(c)});
+  (rB?.callLog||[]).forEach(c=>{if(!pcB[c.uid])pcB[c.uid]=[];pcB[c.uid].push(c)});
+  const con=document.getElementById('hhl');if(!con)return;
+  con.innerHTML=sh.map(unit=>{
+    const ucA=unit.mems.flatMap(m=>pcA[m.id]||[]);
+    const ucB=unit.mems.flatMap(m=>pcB[m.id]||[]);
+    const gh=ucB.filter(c=>c.type==='ghost').length;
+    const twA=ucA.filter(c=>c.type!=='ghost').reduce((s,c)=>s+c.waitTime,0);
+    const twB=ucB.filter(c=>c.type!=='ghost').reduce((s,c)=>s+c.waitTime,0);
+    const mh=unit.mems.map(m=>{
+      const mB=(pcB[m.id]||[]).filter(c=>c.type!=='ghost');
+      const mG=(pcB[m.id]||[]).filter(c=>c.type==='ghost');
+      const mA=(pcA[m.id]||[]).filter(c=>c.type!=='ghost');
+      const wA=mA.reduce((s,c)=>s+c.waitTime,0),wB=mB.reduce((s,c)=>s+c.waitTime,0);
+      const evs=[...(pcB[m.id]||[])].sort((a,b)=>a.time-b.time);
+      const chips=evs.map(c=>{
+        const cl=c.type==='ghost'?'ec-gh':c.type==='exit'?'ec-ex':c.type==='enter'||c.type==='amen_ret'?'ec-en':'ec-am';
+        const lb2=c.type==='ghost'?'👻':c.type==='exit'?'↓외출':c.type==='enter'?'↑귀가':c.type;
+        return`<span class="ec ${cl}" title="${hms(c.time)} ${flL(c.from)}→${flL(c.to)} 대기${c.waitTime}초">${hms(c.time)} ${lb2}</span>`;
+      }).join('');
+      return`<div class="mr"><span class="mid">${m.id}</span><span class="sb2 ${m.hasSr?'hs':'ns'}">${m.hasSr?'스르륵':'일반'}</span>
+        <span style="color:var(--muted)">A:${fmt(wA)} B:${fmt(wB)} 유령<span style="color:var(--danger)">${mG.length}</span></span>
+        <span style="color:var(--muted)">${mB.length}회</span>
+        <div class="ech">${chips||'<span style="color:var(--muted)">이벤트 없음</span>'}</div></div>`;
+    }).join('');
+    return`<div class="hhc" id="hhc${unit.id}"><div class="hhh" onclick="tHH(${unit.id})">
+      <div class="hhr">${unit.floor}층${unit.unit}호</div>
+      <div class="hhi">${unit.mems.length}인|스르륵${unit.mems.filter(m=>m.hasSr).length}명</div>
+      <div class="hhs"><span style="color:var(--acc)">A ${fmt(twA)}</span> / <span style="color:var(--acc2)">B ${fmt(twB)}</span> | 유령<span style="color:var(--danger)">${gh}</span>회</div>
+      <div class="exi">▼</div></div>
+      <div class="hhb">${mh}</div></div>`;
+  }).join('')+(flt.length>80?`<p style="font-size:10px;color:var(--muted);padding:7px">${flt.length}세대 중 80세대 표시</p>`:'');
+}
+function tHH(id){document.getElementById('hhc'+id)?.classList.toggle('op')}
+function showTab(id,btn){
+  document.querySelectorAll('.tab-pnl').forEach(p=>p.classList.remove('active'));
+  document.querySelectorAll('.tab-btn').forEach(b=>b.classList.remove('active'));
+  document.getElementById(id)?.classList.add('active');
+  if(btn)btn.classList.add('active');
+}
+
+// Init seed grid on load
+buildSeedGrid();
+</script>
+</body>
+</html>
